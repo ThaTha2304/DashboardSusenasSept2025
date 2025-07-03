@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
-import Connection
+import geopandas as gpd
 import folium
+import Connection
 import json
 from streamlit_folium import st_folium
 
@@ -18,16 +19,17 @@ updatingData = Connection.getDataUpdating()
 updatingData[["Kode Provinsi", "Kode Kabupaten"]] = updatingData[["Kode Provinsi", "Kode Kabupaten"]].astype(int).astype(str)
 updatingData["Kode Kecamatan"] = updatingData["Kode Kecamatan"].apply(lambda x: f"{int(x):03d}")
 updatingData["Kode Nagari"] = updatingData["Kode Nagari"].apply(lambda x: f"{int(x):03d}")
-updatingData["idKab"] = updatingData["Kode SLS"].str[:4]
-updatingData["idKec"] = updatingData["Kode SLS"].str[:7]
-updatingData["idNag"] = updatingData["Kode SLS"].str[:10]
+updatingData["idkab"] = updatingData["Kode SLS"].str[:4]
+updatingData["idkec"] = updatingData["Kode SLS"].str[:7]
+updatingData["iddesa"] = updatingData["Kode SLS"].str[:10]
+updatingData = updatingData.rename(columns = {"Kode SLS": "idbs"})
 
 # Tambah selection di sidebar
 with st.sidebar:
     st.divider()
     level = st.selectbox(
         "Level Data:",
-        ("Kabupaten", "Kecamatan", "Nagari")
+        ("Kabupaten", "Kecamatan", "Nagari", "Blok Sensus")
     )
 
     st.write(f"You selected: {level}")
@@ -41,63 +43,104 @@ with st.sidebar:
 def show_data(level_data):
     # Seleksi level_data
     if level_data == "Kabupaten":
-        total = updatingData.groupby("idKab")["Status Dokumen"].count()
-
-        clean = updatingData[updatingData["Status Dokumen"] == "Clean"].groupby("idKab")["Status Dokumen"].count()
-
-        summary = pd.DataFrame({
-            "Total" : total,
-            "Clean" : clean
-        })
-
-        summary["Persentase Clean"] = (summary["Clean"] / summary["Total"])*100
-        summary["Persentase Clean"] = summary["Persentase Clean"].round(2)
-        summary = summary.reset_index()
+        total = updatingData.groupby("idkab")["Status Dokumen"].count()
+        measure = updatingData[updatingData["Status Dokumen"] == "Clean"].groupby("idkab")["Status Dokumen"].count()
 
     elif level_data == "Kecamatan":
-        temp = updatingData[updatingData["Status Dokumen"] == "Clean"]
-        summary = temp.groupby("idKec")["Status Dokumen"].count()
+        total = updatingData.groupby("idkec")["Status Dokumen"].count()
+        measure = updatingData[updatingData["Status Dokumen"] == "Clean"].groupby("idkec")["Status Dokumen"].count()
 
     elif level_data == "Nagari":
-        temp = updatingData[updatingData["Status Dokumen"] == "Clean"]
-        summary = temp.groupby("idNag")["Status Dokumen"].count()
+        total = updatingData.groupby("iddesa")["Status Dokumen"].count()
+        measure = updatingData[updatingData["Status Dokumen"] == "Clean"].groupby("iddesa")["Status Dokumen"].count()
+
+    elif level_data == "Blok Sensus":
+        total = updatingData.groupby("idbs")["Status Dokumen"].count()
+        measure = updatingData[updatingData["Status Dokumen"] == "Clean"].groupby("idbs")["Status Dokumen"].count()
     
+    summary = pd.DataFrame({
+        "Total" : total,
+        "Measure" : measure
+    })
+
+    summary["Persentase"] = (summary["Measure"] / summary["Total"])*100
+    summary["Persentase"] = summary["Persentase"].round(2)
+    summary = summary.reset_index()
     return summary
 
 # Fungsi buat tampilin peta
 def show_map(level_data) :
     # Seleksi level_data
     if level_data == "Kabupaten":
-        with open(kabupaten, encoding="utf-8") as f:
-            geojson = json.load(f)
+        id = "idkab"
+        gdf = gpd.read_file(kabupaten)
+        gdf_merged = gdf.merge(show_data(level_data), on = id, how = "left")
+        tooltip = folium.GeoJsonTooltip(
+            fields=["idkab", "nmkab", "Measure", "Persentase"],
+            aliases=["Kode Kabupaten", "Kabupaten", "Data", "Data (%)"]
+        )
     elif level_data == "Kecamatan":
-        with open(kecamatan, encoding="utf-8") as f:
-            geojson = json.load(f)
+        id = "idkec"
+        gdf = gpd.read_file(kecamatan)
+        gdf_merged = gdf.merge(show_data(level_data), on = id, how = "left")
+        tooltip = folium.GeoJsonTooltip(
+            fields=["idkec", "nmkec", "Measure", "Persentase"],
+            aliases=["Kode Kecamatan", "Kecamatan", "Data", "Data (%)"]
+        )
     elif level_data == "Nagari":
-        with open(nagari, encoding="utf-8") as f:
-            geojson = json.load(f)
+        id = "iddesa"
+        gdf = gpd.read_file(nagari)
+        gdf_merged = gdf.merge(show_data(level_data), on = id, how = "left")
+        tooltip = folium.GeoJsonTooltip(
+            fields=["iddesa", "nmkec", "nmdesa", "Measure", "Persentase"],
+            aliases=["Kode Desa", "Kecamatan", "Desa", "Data", "Data (%)"]
+        )
+    elif level_data == "Blok Sensus":
+        id = "idbs"
+        gdf = gpd.read_file(bs)
+        gdf_merged = gdf.merge(show_data(level_data), on = id, how = "left")
+        tooltip = folium.GeoJsonTooltip(
+            fields=["idbs", "nmkec", "nmdesa", "kdbs", "Measure", "Persentase"],
+            aliases=["Kode BS", "Kecamatan", "Desa", "BS", "Data", "Data (%)"]
+        )
     
     # Tampilkan peta
-    m = folium.Map(location=[-1.100, 101.7], zoom_start=7)
+    m = folium.Map(location=[-1.100, 101.7], zoom_start=9)
 
-    x = "idkab"
     # Tambah Choropleth Map
     folium.Choropleth(
-        geo_data=geojson,
-        data=show_data(level_data),
-        columns=["idKab", "Persentase Clean"],
-        key_on=f"feature.properties.{x}"
+        geo_data = gdf_merged,
+        data = show_data(level_data),
+        columns = [show_data(level_data).iloc[:,0], "Persentase"],
+        key_on = f"feature.properties.{id}",
+        bins = [0, 25, 50, 75, 100],
+        fill_color = "RdYlGn"
     ).add_to(m)
 
-    map = st_folium(m, width=725)
-    return map    
+    # Tambah geojson
+    folium.GeoJson(
+        data = gdf_merged,
+        name = "Tooltip",
+        tooltip = tooltip,
+        zoom_on_click = True,
+        style_function = lambda x: {
+            "fillOpacity" : 0,
+            "color" : "black",
+            "weight" : 0.5
+        },
+        highlight_function = lambda x: {
+            "fillOpacity" : 0.5,
+            "color" : "cyan",
+            "weight" : 1.5
+        }
+    ).add_to(m)
 
-st.write(f"Data: {filter_data}, Level: {level}")
+    map = st_folium(m)
+    return map    
 
 # Add Columns
 col1, col2, col3, col4 = st.columns(4, border=True)
 col11, col12 = st.columns(2, border = True)
-
 
 # Menampilkan jumlah dokumen diterima IPDS
 jumlah_masuk = updatingData["Tanggal Diterima"].notna().sum()
@@ -120,10 +163,7 @@ jumlah_error = (updatingData["Status Dokumen"] == "Error").sum()
 with col4:
     st.metric(label="Jumlah Dokumen Error", value=jumlah_error)
 
-
 # Menampilkan peta
 with col11:
     st.write(f"Menampilkan data: {filter_data}, pada Level: {level}")
     show_map(level)
-
-st.write(updatingData)
