@@ -4,6 +4,7 @@ import geopandas as gpd
 import folium
 import Connection
 import json
+import plotly.express as px
 from streamlit_folium import st_folium
 
 # Define Layers
@@ -142,24 +143,47 @@ def show_map(level_data) :
 col1, col2, col3, col4 = st.columns(4, border=True)
 col11, col12 = st.columns(2, border = True)
 
-# Menampilkan jumlah dokumen diterima IPDS
+# Hitung data
 jumlah_masuk = updatingData["Tanggal Diterima"].notna().sum()
+jumlah_belum_masuk = len(updatingData) - jumlah_masuk
+
+jumlah_mulai_entri = updatingData["Tanggal Entri"].notna().sum()
+jumlah_belum_entri = jumlah_masuk - jumlah_mulai_entri
+
+jumlah_selesai_entri = updatingData["Tanggal Selesai Entri"].notna().sum()
+jumlah_belum_selesai_entri = jumlah_mulai_entri - jumlah_selesai_entri
+
+jumlah_clean = (updatingData["Status Dokumen"] == "Clean").sum()
+jumlah_error = (updatingData["Status Dokumen"] == "Error").sum()
+
+agregat = pd.DataFrame({
+    "Kategori" : [
+        "Belum Masuk IPDS",
+        "Belum Entri",
+        "Belum Selesai Entri",
+        "Dokumen Clean"
+    ],
+    "Jumlah" : [
+        jumlah_belum_masuk,
+        jumlah_belum_entri,
+        jumlah_belum_selesai_entri,
+        jumlah_clean
+    ]
+})
+
+# Menampilkan jumlah dokumen diterima IPDS
 with col1:
     st.metric(label="Jumlah Dokumen Masuk IPDS", value=jumlah_masuk)
 
 # Menampilkan jumlah dokumen selesai entri
-jumlah_sudah_entri = updatingData["Tanggal Selesai Entri"].notna().sum()
 with col2:
-    st.metric(label="Jumlah Dokumen Selesai Entri", value=jumlah_sudah_entri)
+    st.metric(label="Jumlah Dokumen Selesai Entri", value=jumlah_selesai_entri)
 
 # Menampilkan jumlah dokumen clean
-jumlah_clean = (updatingData["Status Dokumen"] == "Clean").sum()
-
 with col3:
     st.metric(label="Jumlah Dokumen Clean", value=jumlah_clean)
 
 # Menampilkan jumlah dokumen error
-jumlah_error = (updatingData["Status Dokumen"] == "Error").sum()
 with col4:
     st.metric(label="Jumlah Dokumen Error", value=jumlah_error)
 
@@ -167,3 +191,13 @@ with col4:
 with col11:
     st.write(f"Menampilkan data: {filter_data}, pada Level: {level}")
     show_map(level)
+
+with col12:
+    fig = px.pie(
+        data_frame = agregat, 
+        names="Kategori", 
+        values = "Jumlah", 
+        title = "Progress Pengolahan Dokumen",
+        hole = .3
+    )
+    st.plotly_chart(fig, use_container_width = True)
