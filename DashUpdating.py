@@ -6,6 +6,7 @@ import Connection
 import json
 import plotly.express as px
 from streamlit_folium import st_folium
+from datetime import date
 
 # Define Layers
 kabupaten = "assets\geojson\Batas Kabupaten.geojson"
@@ -15,6 +16,8 @@ bs = "assets\geojson\Batas BS.geojson"
 
 # Define Data
 updatingData = Connection.getDataUpdating()
+start_date = date(2025, 2, 1)
+end_date = date(2025, 2, 28)
 
 # Cleaning Updating Data
 updatingData[["Kode Provinsi", "Kode Kabupaten"]] = updatingData[["Kode Provinsi", "Kode Kabupaten"]].astype(int).astype(str)
@@ -24,6 +27,10 @@ updatingData["idkab"] = updatingData["Kode SLS"].str[:4]
 updatingData["idkec"] = updatingData["Kode SLS"].str[:7]
 updatingData["iddesa"] = updatingData["Kode SLS"].str[:10]
 updatingData = updatingData.rename(columns = {"Kode SLS": "idbs"})
+
+updatingData["Tanggal Diterima"] = pd.to_datetime(updatingData["Tanggal Diterima"], errors='coerce', dayfirst=True)
+updatingData["Tanggal Entri"] = pd.to_datetime(updatingData["Tanggal Entri"], errors='coerce', dayfirst=True)
+updatingData["Tanggal Selesai Entri"] = pd.to_datetime(updatingData["Tanggal Selesai Entri"], errors='coerce', dayfirst=True)
 
 # Tambah selection di sidebar
 with st.sidebar:
@@ -40,24 +47,42 @@ with st.sidebar:
         ("Dokumen Masuk IPDS", "Dokumen Clean")
     )
 
+    tanggal_range = st.date_input(
+        "Pilih Rentang Tanggal: ", 
+        (updatingData["Tanggal Diterima"].min().date(), updatingData["Tanggal Diterima"].max().date())
+    )
+
+    if len(tanggal_range) != 2:
+        tanggal_awal = updatingData["Tanggal Diterima"].min().date()
+        tanggal_akhir = updatingData["Tanggal Diterima"].max().date()
+    
+    else:
+        tanggal_awal, tanggal_akhir = tanggal_range
+    
+    # Filter data
+    updatingDataFiltered = updatingData[
+        (updatingData["Tanggal Diterima"] >= pd.to_datetime(tanggal_awal)) & 
+        (updatingData["Tanggal Diterima"] <= pd.to_datetime(tanggal_akhir))
+    ]
+
 # Fungsi buat agregat data
 def show_data(level_data):
     # Seleksi level_data
     if level_data == "Kabupaten":
-        total = updatingData.groupby("idkab")["Status Dokumen"].count()
-        measure = updatingData[updatingData["Status Dokumen"] == "Clean"].groupby("idkab")["Status Dokumen"].count()
+        total = updatingDataFiltered.groupby("idkab")["Status Dokumen"].count()
+        measure = updatingDataFiltered[updatingDataFiltered["Status Dokumen"] == "Clean"].groupby("idkab")["Status Dokumen"].count()
 
     elif level_data == "Kecamatan":
-        total = updatingData.groupby("idkec")["Status Dokumen"].count()
-        measure = updatingData[updatingData["Status Dokumen"] == "Clean"].groupby("idkec")["Status Dokumen"].count()
+        total = updatingDataFiltered.groupby("idkec")["Status Dokumen"].count()
+        measure = updatingDataFiltered[updatingDataFiltered["Status Dokumen"] == "Clean"].groupby("idkec")["Status Dokumen"].count()
 
     elif level_data == "Nagari":
-        total = updatingData.groupby("iddesa")["Status Dokumen"].count()
-        measure = updatingData[updatingData["Status Dokumen"] == "Clean"].groupby("iddesa")["Status Dokumen"].count()
+        total = updatingDataFiltered.groupby("iddesa")["Status Dokumen"].count()
+        measure = updatingDataFiltered[updatingDataFiltered["Status Dokumen"] == "Clean"].groupby("iddesa")["Status Dokumen"].count()
 
     elif level_data == "Blok Sensus":
-        total = updatingData.groupby("idbs")["Status Dokumen"].count()
-        measure = updatingData[updatingData["Status Dokumen"] == "Clean"].groupby("idbs")["Status Dokumen"].count()
+        total = updatingDataFiltered.groupby("idbs")["Status Dokumen"].count()
+        measure = updatingDataFiltered[updatingDataFiltered["Status Dokumen"] == "Clean"].groupby("idbs")["Status Dokumen"].count()
     
     summary = pd.DataFrame({
         "Total" : total,
@@ -144,17 +169,17 @@ col1, col2, col3, col4 = st.columns(4, border=True)
 col11, col12 = st.columns(2, border = True)
 
 # Hitung data
-jumlah_masuk = updatingData["Tanggal Diterima"].notna().sum()
+jumlah_masuk = updatingDataFiltered["Tanggal Diterima"].notna().sum()
 jumlah_belum_masuk = len(updatingData) - jumlah_masuk
 
-jumlah_mulai_entri = updatingData["Tanggal Entri"].notna().sum()
+jumlah_mulai_entri = updatingDataFiltered["Tanggal Entri"].notna().sum()
 jumlah_belum_entri = jumlah_masuk - jumlah_mulai_entri
 
-jumlah_selesai_entri = updatingData["Tanggal Selesai Entri"].notna().sum()
+jumlah_selesai_entri = updatingDataFiltered["Tanggal Selesai Entri"].notna().sum()
 jumlah_belum_selesai_entri = jumlah_mulai_entri - jumlah_selesai_entri
 
-jumlah_clean = (updatingData["Status Dokumen"] == "Clean").sum()
-jumlah_error = (updatingData["Status Dokumen"] == "Error").sum()
+jumlah_clean = (updatingDataFiltered["Status Dokumen"] == "Clean").sum()
+jumlah_error = (updatingDataFiltered["Status Dokumen"] == "Error").sum()
 
 agregat = pd.DataFrame({
     "Kategori" : [
