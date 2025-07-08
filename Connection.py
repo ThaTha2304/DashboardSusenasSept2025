@@ -19,4 +19,16 @@ def getDataUpdating():
     
     return dfUpdating
 
+def sheetPendataan():
+    conn = st.connection("gsheets", type=GSheetsConnection)
+
+    df = conn.read(
+        worksheet="Pendataan"
+    )
+    return df
+
+def getDataPendataan():
+    df = pd.DataFrame(sheetPendataan())
+
+    return df
 # st.write(getDataUpdating().dtypes)
