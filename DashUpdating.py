@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import geopandas as gpd
+import streamviz
 import folium
 import Connection
 import json
@@ -39,8 +40,6 @@ with st.sidebar:
         "Level Data:",
         ("Kabupaten", "Kecamatan", "Nagari", "Blok Sensus")
     )
-
-    st.write(f"You selected: {level}")
 
     filter_data = st.selectbox(
         "Filter data:",
