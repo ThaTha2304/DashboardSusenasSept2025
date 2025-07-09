@@ -60,28 +60,32 @@ with st.sidebar:
 def show_data(level_data):
     # Seleksi level_data
     if level_data == "Kabupaten":
-        total = updatingDataFiltered.groupby("idkab")["Status Dokumen"].count()
-        measure = updatingDataFiltered[updatingDataFiltered["Status Dokumen"] == "Clean"].groupby("idkab")["Status Dokumen"].count()
+        index_col = "idkab"
 
     elif level_data == "Kecamatan":
-        total = updatingDataFiltered.groupby("idkec")["Status Dokumen"].count()
-        measure = updatingDataFiltered[updatingDataFiltered["Status Dokumen"] == "Clean"].groupby("idkec")["Status Dokumen"].count()
+        index_col = "idkec"
 
     elif level_data == "Nagari":
-        total = updatingDataFiltered.groupby("iddesa")["Status Dokumen"].count()
-        measure = updatingDataFiltered[updatingDataFiltered["Status Dokumen"] == "Clean"].groupby("iddesa")["Status Dokumen"].count()
+        index_col = "iddesa"
 
     elif level_data == "Blok Sensus":
-        total = updatingDataFiltered.groupby("idbs")["Status Dokumen"].count()
-        measure = updatingDataFiltered[updatingDataFiltered["Status Dokumen"] == "Clean"].groupby("idbs")["Status Dokumen"].count()
+        index_col = "idbs"
     
+    all_index = updatingData[index_col].unique()
+
+    total = updatingData.groupby(index_col)["Status Dokumen"].count()
+    total = total.reindex(all_index, fill_value=0)
+
+    measure = updatingDataFiltered[updatingDataFiltered["Status Dokumen"] == "Clean"].groupby(index_col)["Status Dokumen"].count()
+    measure = measure.reindex(all_index, fill_value = 0)
+
     summary = pd.DataFrame({
         "Total" : total,
         "Measure" : measure
     })
 
-    summary["Persentase"] = (summary["Measure"] / summary["Total"])*100
-    summary["Persentase"] = summary["Persentase"].round(2)
+    summary["Persentase"] = (summary["Measure"] / summary["Total"].replace(0, pd.NA))*100
+    summary["Persentase"] = summary["Persentase"].round(2).fillna(0)
     summary = summary.reset_index()
     return summary
 
