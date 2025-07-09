@@ -11,10 +11,10 @@ from streamlit_folium import st_folium
 from datetime import date
 
 # Define Layers
-kabupaten = "assets\geojson\Batas Kabupaten.geojson"
-kecamatan = "assets\geojson\Batas Kecamatan.geojson"
-nagari = "assets\geojson\Batas Nagari.geojson"
-bs = "assets\geojson\Batas BS.geojson"
+kabupaten = "assets/geojson/Batas Kabupaten.geojson"
+kecamatan = "assets/geojson/Batas Kecamatan.geojson"
+nagari = "assets/geojson/Batas Nagari.geojson"
+bs = "assets/geojson/Batas BS.geojson"
 
 # Define Data
 updatingData = Connection.getDataUpdating()
@@ -37,15 +37,6 @@ updatingData["Tanggal Selesai Entri"] = pd.to_datetime(updatingData["Tanggal Sel
 # Tambah selection di sidebar
 with st.sidebar:
     st.divider()
-    level = st.selectbox(
-        "Level Data:",
-        ("Kabupaten", "Kecamatan", "Nagari", "Blok Sensus")
-    )
-
-    filter_data = st.selectbox(
-        "Filter data:",
-        ("Dokumen Masuk IPDS", "Dokumen Clean")
-    )
 
     tanggal_range = st.date_input(
         "Pilih Rentang Tanggal: ", 
@@ -161,12 +152,54 @@ def show_map(level_data) :
         }
     ).add_to(m)
 
-    map = st_folium(m)
-    return map    
+    map = st_folium(m, width = "100%", height=500)
+    return map   
+
+# Fungsi untuk menampilkan pie chart
+def show_chart(data_primer, data_sekunder, label_primer, label_sekunder, warna):
+    fig = go.Figure(go.Bar(
+        x = [data_primer],
+        y = [label_primer],
+        orientation = "h",
+        name = "",
+        marker = dict(color = '#00cc96'),
+        hovertemplate = f'{label_primer} : {data_primer}'
+    ))
+
+    fig.add_trace(go.Bar(
+        x = [updatingData["idbs"].count()],
+        y = [label_primer],
+        orientation = "h",
+        marker = dict(color = warna),
+        showlegend = False,
+        name = "",
+        opacity = 0.3,
+        hovertemplate = f'{label_sekunder} : {data_sekunder}'
+    ))
+
+    fig.update_layout(
+        barmode = "overlay",
+        xaxis = dict(range = [0, updatingData["idbs"].count()], showticklabels = False),
+        yaxis = dict(showticklabels = False),
+        height = 50,
+        margin = dict(l=10, r=10, t=0, b=0),
+        showlegend = False,
+        annotations = [dict(
+            x = updatingData["idbs"].count()/2,
+            y = 0,
+            text = f"{data_primer} - {100*(data_primer/updatingData["idbs"].count()):.2f}%",
+            showarrow = False,
+            font = dict(size = 20, color = "#31333F"), 
+            xanchor = "center",
+            yanchor = "middle"
+        )]
+    )
+    return st.plotly_chart(fig, use_container_width=False)
 
 # Add Columns
-col1, col2, col3, col4 = st.columns(4, border=True)
-col11, col12 = st.columns(2, border = True)
+col1, col2 = st.columns([0.35, 0.65], border=True)
+
+
 
 # Hitung data
 jumlah_masuk = updatingDataFiltered["Tanggal Diterima"].notna().sum()
@@ -198,53 +231,63 @@ agregat = pd.DataFrame({
 
 # Menampilkan jumlah dokumen diterima IPDS
 with col1:
-    # st.text("Jumlah Dokumen Masuk IPDS")
-    # fig = go.Figure(go.Indicator(
-    #     mode="gauge+number",
-    #     value = jumlah_masuk,
-    #     # domain={'x' : [0,1], 'y' : [0,1]},
-    #     gauge={'axis' : {'range' : [0,updatingData["iddesa"].count()]}}
-    # ))
-    # st.plotly_chart(fig, use_container_width=False)
-    st.metric(label="Jumlah Dokumen Masuk IPDS", value=jumlah_masuk)
+    st.markdown("#### Status Dokumen")
 
-# Menampilkan jumlah dokumen selesai entri
-with col2:
-    st.metric(label="Jumlah Dokumen Selesai Entri", value=jumlah_selesai_entri)
+    st.markdown("Dokumen Diterima IPDS")
+    show_chart(jumlah_masuk, jumlah_belum_masuk, "Masuk", "Belum Masuk", "#C3C2C2")
 
-# Menampilkan jumlah dokumen clean
-with col3:
-    st.metric(label="Jumlah Dokumen Clean", value=jumlah_clean)
+    st.markdown("Dokumen Selesai Entri")
+    show_chart(jumlah_selesai_entri, jumlah_belum_selesai_entri, "Selesai Entri", "Belum Selesai Entri", "#C3C2C2")
+    
+    st.markdown("#### Validasi Dokumen")
+    show_chart(jumlah_clean, jumlah_error, "Clean", "Error", "#FF6E6E")
 
-# Menampilkan jumlah dokumen error
-with col4:
-    st.metric(label="Jumlah Dokumen Error", value=jumlah_error)
+    st.divider()
 
-# Menampilkan peta
-with col11:
-    st.write(f"Menampilkan data: {filter_data}, pada Level: {level}")
-    show_map(level)
+    st.markdown("#### Progress Pengolahan")
 
-with col12:
-    fig = px.pie(
-        data_frame = agregat, 
-        names="Kategori", 
-        values = "Jumlah", 
-        title = "Progress Pengolahan Dokumen",
-        hole = .3
-    )
+    fig = go.Figure()
 
-    fig = go.Figure(data=[go.Pie(
-        labels=agregat["Kategori"],
-        values = agregat["Jumlah"],
-        pull = [0,0,0,0.2]
-    )])
+    for i, row in agregat.iterrows():
+        fig.add_trace(go.Bar(
+            name = "",
+            y = ["Progress"],
+            x=[row["Jumlah"]],
+            text = row["Jumlah"],
+            textposition='auto',
+            orientation = "h",
+            hovertemplate=f"{row['Kategori']} : {row['Jumlah']}"
+        ))
+
     fig.update_layout(
-        legend = dict(
-            yanchor = "bottom",
-            y=0,
-            xanchor = "center",
-            x=1.01
-        )
+        barmode = "stack",
+        xaxis = dict(range = [0, updatingData["idbs"].count()], showticklabels = False),
+        yaxis = dict(showticklabels = False),
+        showlegend = False,
+        height = 50,
+        margin = dict(l=10, r=10, t=0, b=0),
     )
-    st.plotly_chart(fig, use_container_width = True)
+    st.plotly_chart(fig)
+
+
+
+with col2:
+    st.markdown("#### Sebaran Dokumen")
+    cola, colb = st.columns([1,1], border = True)
+    with cola:
+        level = st.selectbox(
+            "Level Data:",
+            ("Kabupaten", "Kecamatan", "Nagari", "Blok Sensus")
+        )
+
+
+    with colb:
+        filter_data = st.selectbox(
+            "Filter data:",
+            ("Dokumen Masuk IPDS", "Dokumen Clean")
+        )
+    show_map(level)
+    
+
+
+
