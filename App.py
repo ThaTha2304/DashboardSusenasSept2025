@@ -17,7 +17,7 @@ pg = st.navigation({
     "Pengolahan": [dash_updating, dash_pendataan],
     "Rekap Petugas" : [dash_petugas]
 })
-st.logo("assets\img\logo-bps-oke.png", size="large")
+st.logo("assets/img/logo-bps-oke.png", size="large")
 st.title("Dashboard Pengolahan Susenas Maret 2025")
 st.subheader("BPS Kabupaten Dharmasraya")
 
