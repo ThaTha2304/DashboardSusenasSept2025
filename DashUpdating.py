@@ -6,6 +6,7 @@ import folium
 import Connection
 import json
 import plotly.express as px
+import plotly.graph_objects as go
 from streamlit_folium import st_folium
 from datetime import date
 
@@ -197,6 +198,14 @@ agregat = pd.DataFrame({
 
 # Menampilkan jumlah dokumen diterima IPDS
 with col1:
+    # st.text("Jumlah Dokumen Masuk IPDS")
+    # fig = go.Figure(go.Indicator(
+    #     mode="gauge+number",
+    #     value = jumlah_masuk,
+    #     # domain={'x' : [0,1], 'y' : [0,1]},
+    #     gauge={'axis' : {'range' : [0,updatingData["iddesa"].count()]}}
+    # ))
+    # st.plotly_chart(fig, use_container_width=False)
     st.metric(label="Jumlah Dokumen Masuk IPDS", value=jumlah_masuk)
 
 # Menampilkan jumlah dokumen selesai entri
@@ -223,5 +232,19 @@ with col12:
         values = "Jumlah", 
         title = "Progress Pengolahan Dokumen",
         hole = .3
+    )
+
+    fig = go.Figure(data=[go.Pie(
+        labels=agregat["Kategori"],
+        values = agregat["Jumlah"],
+        pull = [0,0,0,0.2]
+    )])
+    fig.update_layout(
+        legend = dict(
+            yanchor = "bottom",
+            y=0,
+            xanchor = "center",
+            x=1.01
+        )
     )
     st.plotly_chart(fig, use_container_width = True)
