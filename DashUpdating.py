@@ -44,27 +44,36 @@ with st.sidebar:
     ]
 
 # Fungsi buat agregat data
-def show_data(level_data):
+def show_data(level_data, filter_data):
     # Seleksi level_data
     if level_data == "Kabupaten":
-        index_col = "idkab"
+        index_wilayah = "idkab"
 
     elif level_data == "Kecamatan":
-        index_col = "idkec"
+        index_wilayah = "idkec"
 
     elif level_data == "Nagari":
-        index_col = "iddesa"
+        index_wilayah = "iddesa"
 
     elif level_data == "Blok Sensus":
-        index_col = "idbs"
+        index_wilayah = "idbs"
     
-    all_index = updatingData[index_col].unique()
+    all_index = updatingData[index_wilayah].unique()
 
-    total = updatingData.groupby(index_col)["Status Dokumen"].count()
-    total = total.reindex(all_index, fill_value=0)
+    if filter_data == "Dokumen Clean":
+        total = updatingData.groupby(index_wilayah).size()
+        total = total.reindex(all_index, fill_value=0)
 
-    measure = updatingDataFiltered[updatingDataFiltered["Status Dokumen"] == "Clean"].groupby(index_col)["Status Dokumen"].count()
-    measure = measure.reindex(all_index, fill_value = 0)
+        measure = updatingDataFiltered[updatingDataFiltered["Status Dokumen"] == "Clean"].groupby(index_wilayah)["Status Dokumen"].count()
+        measure = measure.reindex(all_index, fill_value = 0)
+        
+    elif filter_data == "Dokumen Masuk IPDS":
+        index_data = "Tanggal Diterima"
+        total = updatingData.groupby(index_wilayah).size()
+        total = total.reindex(all_index, fill_value=0)
+
+        measure = updatingDataFiltered[updatingDataFiltered[index_data].notnull()].groupby(index_wilayah)[index_data].count()
+        measure = measure.reindex(all_index, fill_value = 0)        
 
     summary = pd.DataFrame({
         "Total" : total,
@@ -77,12 +86,13 @@ def show_data(level_data):
     return summary
 
 # Fungsi buat tampilin peta
-def show_map(level_data) :
+def show_map(level_data, filter_data) :
+    data = show_data(level_data, filter_data)
     # Seleksi level_data
     if level_data == "Kabupaten":
         id = "idkab"
         gdf = gpd.read_file(kabupaten)
-        gdf_merged = gdf.merge(show_data(level_data), on = id, how = "left")
+        gdf_merged = gdf.merge(data, on = id, how = "left")
         tooltip = folium.GeoJsonTooltip(
             fields=["idkab", "nmkab", "Measure", "Persentase"],
             aliases=["Kode Kabupaten", "Kabupaten", "Data", "Data (%)"]
@@ -90,7 +100,7 @@ def show_map(level_data) :
     elif level_data == "Kecamatan":
         id = "idkec"
         gdf = gpd.read_file(kecamatan)
-        gdf_merged = gdf.merge(show_data(level_data), on = id, how = "left")
+        gdf_merged = gdf.merge(data, on = id, how = "left")
         tooltip = folium.GeoJsonTooltip(
             fields=["idkec", "nmkec", "Measure", "Persentase"],
             aliases=["Kode Kecamatan", "Kecamatan", "Data", "Data (%)"]
@@ -98,7 +108,7 @@ def show_map(level_data) :
     elif level_data == "Nagari":
         id = "iddesa"
         gdf = gpd.read_file(nagari)
-        gdf_merged = gdf.merge(show_data(level_data), on = id, how = "left")
+        gdf_merged = gdf.merge(data, on = id, how = "left")
         tooltip = folium.GeoJsonTooltip(
             fields=["iddesa", "nmkec", "nmdesa", "Measure", "Persentase"],
             aliases=["Kode Desa", "Kecamatan", "Desa", "Data", "Data (%)"]
@@ -106,7 +116,7 @@ def show_map(level_data) :
     elif level_data == "Blok Sensus":
         id = "idbs"
         gdf = gpd.read_file(bs)
-        gdf_merged = gdf.merge(show_data(level_data), on = id, how = "left")
+        gdf_merged = gdf.merge(data, on = id, how = "left")
         tooltip = folium.GeoJsonTooltip(
             fields=["idbs", "nmkec", "nmdesa", "kdbs", "Measure", "Persentase"],
             aliases=["Kode BS", "Kecamatan", "Desa", "BS", "Data", "Data (%)"]
@@ -118,8 +128,8 @@ def show_map(level_data) :
     # Tambah Choropleth Map
     folium.Choropleth(
         geo_data = gdf_merged,
-        data = show_data(level_data),
-        columns = [show_data(level_data).iloc[:,0], "Persentase"],
+        data = data,
+        columns = [data.iloc[:,0], "Persentase"],
         key_on = f"feature.properties.{id}",
         bins = [0, 25, 50, 75, 100],
         fill_color = "RdYlGn"
@@ -190,8 +200,6 @@ def show_chart(data_primer, data_sekunder, label_primer, label_sekunder, warna):
 # Add Columns
 col1, col2 = st.columns([0.35, 0.65], border=True)
 
-
-
 # Hitung data
 jumlah_masuk = updatingDataFiltered["Tanggal Diterima"].notna().sum()
 jumlah_belum_masuk = len(updatingData) - jumlah_masuk
@@ -260,8 +268,6 @@ with col1:
     )
     st.plotly_chart(fig)
 
-
-
 with col2:
     st.markdown("#### Sebaran Dokumen")
     cola, colb = st.columns([1,1], border = True)
@@ -271,13 +277,12 @@ with col2:
             ("Kabupaten", "Kecamatan", "Nagari", "Blok Sensus")
         )
 
-
     with colb:
         filter_data = st.selectbox(
             "Filter data:",
             ("Dokumen Masuk IPDS", "Dokumen Clean")
         )
-    show_map(level)
+    show_map(level, filter_data)
     
 
 
