@@ -40,7 +40,23 @@ def sheetPendataan():
     return df
 
 def getDataPendataan():
-    df = pd.DataFrame(sheetPendataan())
+    dfPendataan = pd.DataFrame(sheetPendataan())
+    dfPendataan = dfPendataan.drop(["No", "Kd-Provinsi", "Kd-Kabupaten", "Kd-Kecamatan", "Kd-Nagari"], axis=1)
+    dfPendataan[["Kode Provinsi", "Kode Kabupaten"]] = dfPendataan[["Kode Provinsi", "Kode Kabupaten"]].astype(int).astype(str)
+    dfPendataan["Kode Kecamatan"] = dfPendataan["Kode Kecamatan"].apply(lambda x: f"{int(x):03d}")
+    dfPendataan["Kode Nagari"] = dfPendataan["Kode Nagari"].apply(lambda x: f"{int(x):03d}")
+    dfPendataan["idkab"] = dfPendataan["Kode SLS"].str[:4]
+    dfPendataan["idkec"] = dfPendataan["Kode SLS"].str[:7]
+    dfPendataan["iddesa"] = dfPendataan["Kode SLS"].str[:10]
+    dfPendataan = dfPendataan.rename(columns = {"Kode SLS": "idbs"})
+    dfPendataan = dfPendataan.rename(columns = {"Dokumen Sudah Clean?": "Status Dokumen"})
 
-    return df
+    dfPendataan["Tanggal Diterima"] = pd.to_datetime(dfPendataan["Tanggal Diterima"], errors='coerce', dayfirst=True)
+    dfPendataan["Tanggal Entri"] = pd.to_datetime(dfPendataan["Tanggal Entri"], errors='coerce', dayfirst=True)
+    dfPendataan["Tanggal Selesai Entri"] = pd.to_datetime(dfPendataan["Tanggal Selesai Entri"], errors='coerce', dayfirst=True)
+    dfPendataan["Tanggal Validasi (MITRA)"] = pd.to_datetime(dfPendataan["Tanggal Validasi (MITRA)"], errors='coerce', dayfirst=True)
+    dfPendataan["Tanggal Selesai Validasi (MITRA)"] = pd.to_datetime(dfPendataan["Tanggal Selesai Validasi (MITRA)"], errors='coerce', dayfirst=True)
+    dfPendataan["Tanggal Validasi (ORGANIK)"] = pd.to_datetime(dfPendataan["Tanggal Validasi (ORGANIK)"], errors='coerce', dayfirst=True)
+
+    return dfPendataan
 # st.write(getDataUpdating().dtypes)
