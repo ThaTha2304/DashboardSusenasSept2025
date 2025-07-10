@@ -21,19 +21,6 @@ updatingData = Connection.getDataUpdating()
 start_date = date(2025, 2, 1)
 end_date = date(2025, 2, 28)
 
-# Cleaning Updating Data
-updatingData[["Kode Provinsi", "Kode Kabupaten"]] = updatingData[["Kode Provinsi", "Kode Kabupaten"]].astype(int).astype(str)
-updatingData["Kode Kecamatan"] = updatingData["Kode Kecamatan"].apply(lambda x: f"{int(x):03d}")
-updatingData["Kode Nagari"] = updatingData["Kode Nagari"].apply(lambda x: f"{int(x):03d}")
-updatingData["idkab"] = updatingData["Kode SLS"].str[:4]
-updatingData["idkec"] = updatingData["Kode SLS"].str[:7]
-updatingData["iddesa"] = updatingData["Kode SLS"].str[:10]
-updatingData = updatingData.rename(columns = {"Kode SLS": "idbs"})
-
-updatingData["Tanggal Diterima"] = pd.to_datetime(updatingData["Tanggal Diterima"], errors='coerce', dayfirst=True)
-updatingData["Tanggal Entri"] = pd.to_datetime(updatingData["Tanggal Entri"], errors='coerce', dayfirst=True)
-updatingData["Tanggal Selesai Entri"] = pd.to_datetime(updatingData["Tanggal Selesai Entri"], errors='coerce', dayfirst=True)
-
 # Tambah selection di sidebar
 with st.sidebar:
     st.divider()
