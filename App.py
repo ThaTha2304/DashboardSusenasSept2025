@@ -18,9 +18,7 @@ pg = st.navigation({
     "Rekap Petugas" : [dash_petugas]
 })
 st.logo("assets/img/logo-bps-oke.png", size="large")
-st.title("Dashboard Pengolahan Susenas Maret 2025")
-st.subheader("BPS Kabupaten Dharmasraya")
-
-st.sidebar.button("Reset")
+st.markdown("## Dashboard Pengolahan Susenas Maret 2025")
+st.markdown("#### BPS Kabupaten Dharmasraya")
 
 pg.run()
