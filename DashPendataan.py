@@ -23,8 +23,6 @@ end_date = date(2025, 2, 28)
 
 # Tambah selection di sidebar
 with st.sidebar:
-    st.divider()
-
     tanggal_range = st.date_input(
         "Pilih Rentang Tanggal: ", 
         (pendataan["Tanggal Diterima"].min().date(), pendataan["Tanggal Diterima"].max().date())
@@ -218,12 +216,14 @@ agregat = pd.DataFrame({
         "Belum Masuk IPDS",
         "Belum Entri",
         "Belum Selesai Entri",
+        "Dokumen Error",
         "Dokumen Clean"
     ],
     "Jumlah" : [
         jumlah_belum_masuk,
         jumlah_belum_entri,
         jumlah_belum_selesai_entri,
+        jumlah_error,
         jumlah_clean
     ]
 })

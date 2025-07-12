@@ -23,8 +23,6 @@ end_date = date(2025, 2, 28)
 
 # Tambah selection di sidebar
 with st.sidebar:
-    st.divider()
-
     tanggal_range = st.date_input(
         "Pilih Rentang Tanggal: ", 
         (updatingData["Tanggal Diterima"].min().date(), updatingData["Tanggal Diterima"].max().date())
