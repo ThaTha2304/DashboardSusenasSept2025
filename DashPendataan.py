@@ -213,7 +213,7 @@ jumlah_clean = (
     (pendataanFiltered["Tanggal Selesai Entri"].notna()))
 ).sum()
 jumlah_error = (
-    ((pendataanFiltered["Status Dokumen"] == "Error") &
+    ((pendataanFiltered["Status Dokumen"] == "Belum Clean") &
     (pendataanFiltered["Tanggal Selesai Entri"].notna()))
 ).sum()
 
