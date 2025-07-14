@@ -4,4 +4,4 @@ geopandas
 folium
 plotly
 streamlit_folium
-streamlit_gsheets
+git+https://github.com/streamlit/gsheets-connection
