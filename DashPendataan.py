@@ -19,7 +19,7 @@ bs = "assets/geojson/Batas BS.geojson"
 # Define Data
 pendataan = Connection.getDataPendataan()
 start_date = date(2025, 2, 1)
-end_date = date(2025, 2, 28)
+end_date = date(2025, 3, 31)
 
 # Tambah selection di sidebar
 with st.sidebar:
