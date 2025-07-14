@@ -208,8 +208,14 @@ jumlah_belum_entri = jumlah_masuk - jumlah_mulai_entri
 jumlah_selesai_entri = pendataanFiltered["Tanggal Selesai Entri"].notna().sum()
 jumlah_belum_selesai_entri = jumlah_mulai_entri - jumlah_selesai_entri
 
-jumlah_clean = (pendataanFiltered["Status Dokumen"] == "Clean").sum()
-jumlah_error = (pendataanFiltered["Status Dokumen"] == "Error").sum()
+jumlah_clean = (
+    ((pendataanFiltered["Status Dokumen"] == "Clean") &
+    (pendataanFiltered["Tanggal Selesai Entri"].notna()))
+).sum()
+jumlah_error = (
+    ((pendataanFiltered["Status Dokumen"] == "Error") &
+    (pendataanFiltered["Tanggal Selesai Entri"].notna()))
+).sum()
 
 agregat = pd.DataFrame({
     "Kategori" : [
@@ -225,6 +231,13 @@ agregat = pd.DataFrame({
         jumlah_belum_selesai_entri,
         jumlah_error,
         jumlah_clean
+    ],
+    "Warna" : [
+        "#e58606",
+        "#5d69b1",
+        "#764e9f",
+        "#ed645a",
+        "#3bc8a3"
     ]
 })
 
@@ -249,22 +262,32 @@ with col1:
 
     for i, row in agregat.iterrows():
         fig.add_trace(go.Bar(
-            name = "",
+            name = row["Kategori"],
             y = ["Progress"],
             x=[row["Jumlah"]],
             text = row["Jumlah"],
             textposition='auto',
+            textfont = dict(size = 14),
+            insidetextanchor= "middle",
             orientation = "h",
-            hovertemplate=f"{row['Kategori']} : {row['Jumlah']}"
+            hovertemplate=f"{row['Kategori']} : {row['Jumlah']}",
+            marker_color = row["Warna"]
         ))
 
     fig.update_layout(
         barmode = "stack",
-        xaxis = dict(range = [0, pendataan["idbs"].count()], showticklabels = False),
+        xaxis = dict(range = [0, pendataanFiltered["idbs"].count()], showticklabels = False),
         yaxis = dict(showticklabels = False),
-        showlegend = False,
-        height = 50,
-        margin = dict(l=10, r=10, t=0, b=0),
+        showlegend = True,
+        legend = dict(
+            orientation = "h",
+            yanchor = "bottom",
+            y = -0.5,
+            xanchor = "auto",
+            x = 0.5
+        ),
+        height = 200,
+        margin = dict(l=10, r=10, t=0, b=40),
     )
     st.plotly_chart(fig)
 
