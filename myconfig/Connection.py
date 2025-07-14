@@ -3,13 +3,11 @@ import streamlit as st
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
-@st.cache_resource
+@st.cache_data(ttl = 30)
 def sheetUpdating():
     conn = st.connection("gsheets", type=GSheetsConnection)
-
     df = conn.read(
         worksheet="Updating",
-        ttl = 1
     )
     return df
 
@@ -31,9 +29,9 @@ def getDataUpdating():
 
     return dfUpdating
 
+@st.cache_data(ttl = 30)
 def sheetPendataan():
     conn = st.connection("gsheets", type=GSheetsConnection)
-
     df = conn.read(
         worksheet="Pendataan"
     )
@@ -59,4 +57,3 @@ def getDataPendataan():
     dfPendataan["Tanggal Validasi (ORGANIK)"] = pd.to_datetime(dfPendataan["Tanggal Validasi (ORGANIK)"], errors='coerce', dayfirst=True)
 
     return dfPendataan
-# st.write(getDataUpdating().dtypes)
