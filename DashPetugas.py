@@ -24,7 +24,13 @@ with col1:
         data = [go.Bar(
             x = rekap_updating["Jumlah Dokumen"],
             y = rekap_updating["Nama Pengentri"],
-            orientation = "h"
+            orientation = "h",
+            text = rekap_updating["Jumlah Dokumen"],
+            textposition = "inside",
+            insidetextanchor = "middle",
+            textfont = dict(
+                size = 14
+            )
         )]
     )
 
@@ -45,7 +51,13 @@ with col2:
         data = [go.Bar(
             x = rekap_pendataan["Jumlah Dokumen"],
             y = rekap_pendataan["Nama Pengentri"],
-            orientation = "h"
+            orientation = "h",
+            text = rekap_pendataan["Jumlah Dokumen"],
+            textposition = "inside",
+            insidetextanchor = "middle",
+            textfont = dict(
+                size = 14
+            )
         )]
     )
 
