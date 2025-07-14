@@ -1,2 +1,6 @@
-streamlit_gsheets
 streamlit
+pandas
+geopandas
+folium
+plotly
+streamlit_folium
