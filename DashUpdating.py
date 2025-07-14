@@ -208,21 +208,36 @@ jumlah_belum_entri = jumlah_masuk - jumlah_mulai_entri
 jumlah_selesai_entri = updatingDataFiltered["Tanggal Selesai Entri"].notna().sum()
 jumlah_belum_selesai_entri = jumlah_mulai_entri - jumlah_selesai_entri
 
-jumlah_clean = (updatingDataFiltered["Status Dokumen"] == "Clean").sum()
-jumlah_error = (updatingDataFiltered["Status Dokumen"] == "Error").sum()
+jumlah_clean = (
+    ((updatingDataFiltered["Status Dokumen"] == "Clean") &
+    (updatingDataFiltered["Tanggal Selesai Entri"].notna()))
+).sum()
+jumlah_error = (
+    ((updatingDataFiltered["Status Dokumen"] == "Error") &
+    (updatingDataFiltered["Tanggal Selesai Entri"].notna()))
+).sum()
 
 agregat = pd.DataFrame({
     "Kategori" : [
         "Belum Masuk IPDS",
         "Belum Entri",
         "Belum Selesai Entri",
+        "Dokumen Error",
         "Dokumen Clean"
     ],
     "Jumlah" : [
         jumlah_belum_masuk,
         jumlah_belum_entri,
         jumlah_belum_selesai_entri,
+        jumlah_error,
         jumlah_clean
+    ],
+    "Warna" : [
+        "#e58606",
+        "#5d69b1",
+        "#764e9f",
+        "#ed645a",
+        "#3bc8a3"
     ]
 })
 
@@ -244,25 +259,34 @@ with col1:
     st.markdown("#### Progress Pengolahan")
 
     fig = go.Figure()
-
     for i, row in agregat.iterrows():
         fig.add_trace(go.Bar(
-            name = "",
+            name = row["Kategori"],
             y = ["Progress"],
             x=[row["Jumlah"]],
             text = row["Jumlah"],
             textposition='auto',
+            textfont = dict(size = 14),
+            insidetextanchor= "middle",
             orientation = "h",
-            hovertemplate=f"{row['Kategori']} : {row['Jumlah']}"
+            hovertemplate=f"{row['Kategori']} : {row['Jumlah']}",
+            marker_color = row["Warna"]
         ))
 
     fig.update_layout(
         barmode = "stack",
         xaxis = dict(range = [0, updatingData["idbs"].count()], showticklabels = False),
         yaxis = dict(showticklabels = False),
-        showlegend = False,
-        height = 50,
-        margin = dict(l=10, r=10, t=0, b=0),
+        showlegend = True,
+        legend = dict(
+            orientation = "h",
+            yanchor = "bottom",
+            y = -0.5,
+            xanchor = "auto",
+            x = 0.5
+        ),
+        height = 200,
+        margin = dict(l=10, r=10, t=0, b=40),
     )
     st.plotly_chart(fig)
 
@@ -281,7 +305,3 @@ with col2:
             ("Dokumen Masuk IPDS", "Dokumen Clean")
         )
     show_map(level, filter_data)
-    
-
-
-
