@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import geopandas as gpd
 import folium
-import Connection
+import myconfig.Connection as Connection
 import plotly.express as px
 import plotly.graph_objects as go
 from streamlit_folium import st_folium

@@ -1,6 +1,6 @@
 import streamlit as st
 import plotly.graph_objects as go
-import Connection
+import myconfig.Connection as Connection
 
 # Define data
 updatingData = Connection.getDataUpdating()
