@@ -3,11 +3,11 @@ import streamlit as st
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
-@st.cache_data(ttl = 30)
 def sheetUpdating():
     conn = st.connection("gsheets", type=GSheetsConnection)
     df = conn.read(
         worksheet="Updating",
+        ttl = 5
     )
     return df
 
@@ -29,11 +29,11 @@ def getDataUpdating():
 
     return dfUpdating
 
-@st.cache_data(ttl = 30)
 def sheetPendataan():
     conn = st.connection("gsheets", type=GSheetsConnection)
     df = conn.read(
-        worksheet="Pendataan"
+        worksheet="Pendataan",
+        ttl = 5
     )
     return df
 
