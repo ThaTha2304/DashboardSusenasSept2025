@@ -7,7 +7,7 @@ def sheetUpdating():
     conn = st.connection("gsheets", type=GSheetsConnection)
     df = conn.read(
         worksheet="Updating",
-        ttl = 5
+        ttl = 30
     )
     return df
 
@@ -33,7 +33,7 @@ def sheetPendataan():
     conn = st.connection("gsheets", type=GSheetsConnection)
     df = conn.read(
         worksheet="Pendataan",
-        ttl = 5
+        ttl = 30
     )
     return df
 
