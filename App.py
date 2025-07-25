@@ -17,7 +17,13 @@ pg = st.navigation({
     "Pengolahan": [dash_updating, dash_pendataan],
     "Rekap Petugas" : [dash_petugas]
 })
-st.logo("assets/img/logo-bps-oke.png", size="large")
+theme_info = st.context.theme
+
+if theme_info["type"] == "dark":
+    st.logo("assets/img/Logo BPS Putih.png", size="large")
+elif theme_info["type"] == "light":
+    st.logo("assets/img/logo-bps-oke.png", size="large")
+
 st.markdown("## Dashboard Pengolahan Susenas Maret 2025")
 st.markdown("#### BPS Kabupaten Dharmasraya")
 
