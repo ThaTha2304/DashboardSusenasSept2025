@@ -44,8 +44,8 @@ with col1:
     st.plotly_chart(figUpdating)
 
 with col2:
-    st.markdown("#### Rekapitulasi Updating Susenas")
-    st.markdown("##### Entri Dokumen Updating")
+    st.markdown("#### Rekapitulasi Pendataan Susenas")
+    st.markdown("##### Entri Dokumen Pendataan")
 
     figPendataan = go.Figure(
         data = [go.Bar(
