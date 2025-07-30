@@ -184,7 +184,7 @@ def show_chart(data_primer, data_sekunder, label_primer, label_sekunder, warna):
         annotations = [dict(
             x = updatingData["idbs"].count()/2,
             y = 0,
-            text = f"{data_primer} - {100*(data_primer/updatingData["idbs"].count()):.2f}%",
+            text = f"{data_primer} ({100*(data_primer/updatingData["idbs"].count()):.2f})%",
             showarrow = False,
             font = dict(size = 20, color = "#31333F"), 
             xanchor = "center",
