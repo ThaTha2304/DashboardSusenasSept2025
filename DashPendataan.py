@@ -15,7 +15,14 @@ nagari = "assets/geojson/Batas Nagari.geojson"
 bs = "assets/geojson/Batas BS.geojson"
 
 # Define Data
-pendataan = Connection.getDataPendataan()
+@st.cache_data
+def load_data():
+    return Connection.getDataPendataan()
+pendataan = load_data()
+
+def clear_cache():
+    st.cache_data.clear()
+
 start_date = date(2025, 2, 1)
 end_date = date(2025, 3, 31)
 
@@ -38,6 +45,10 @@ with st.sidebar:
         (pendataan["Tanggal Diterima"] >= pd.to_datetime(tanggal_awal)) & 
         (pendataan["Tanggal Diterima"] <= pd.to_datetime(tanggal_akhir))
     ]
+
+    if st.button("Refresh Data", type="primary"):
+        clear_cache()
+        st.rerun()
 
 # Fungsi buat agregat data
 def show_data(level_data, filter_data):
