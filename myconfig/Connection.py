@@ -41,6 +41,7 @@ def getDataPendataan():
     dfPendataan = pd.DataFrame(sheetPendataan())
     dfPendataan = dfPendataan.drop(["No", "Kd-Provinsi", "Kd-Kabupaten", "Kd-Kecamatan", "Kd-Nagari"], axis=1)
     dfPendataan[["Kode Provinsi", "Kode Kabupaten", "Kode SLS"]] = dfPendataan[["Kode Provinsi", "Kode Kabupaten", "Kode SLS"]].astype(int).astype(str)
+    dfPendataan["NKS"] = dfPendataan["NKS"].apply(lambda x: f"{int(x):05d}")
     dfPendataan["Kode Kecamatan"] = dfPendataan["Kode Kecamatan"].apply(lambda x: f"{int(x):03d}")
     dfPendataan["Kode Nagari"] = dfPendataan["Kode Nagari"].apply(lambda x: f"{int(x):03d}")
     dfPendataan["idkab"] = dfPendataan["Kode SLS"].str[:4]
