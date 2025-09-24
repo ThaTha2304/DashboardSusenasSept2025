@@ -61,9 +61,6 @@ def show_data(level_data, filter_data):
 
     elif level_data == "Nagari":
         index_wilayah = "iddesa"
-
-    elif level_data == "Blok Sensus":
-        index_wilayah = "idbs"
     
     all_index = pendataan[index_wilayah].unique()
 
@@ -74,6 +71,14 @@ def show_data(level_data, filter_data):
         measure = pendataanFiltered[pendataanFiltered["Status Dokumen"] == "Clean"].groupby(index_wilayah)["Status Dokumen"].count()
         measure = measure.reindex(all_index, fill_value = 0)
         
+    elif filter_data == "Dokumen Selesai Entri":
+        index_data = "Tanggal Selesai Entri"
+        total = pendataan.groupby(index_wilayah).size()
+        total = total.reindex(all_index, fill_value=0)
+
+        measure = pendataanFiltered[pendataanFiltered[index_data].notnull()].groupby(index_wilayah)[index_data].count()
+        measure = measure.reindex(all_index, fill_value = 0)        
+    
     elif filter_data == "Dokumen Masuk IPDS":
         index_data = "Tanggal Diterima"
         total = pendataan.groupby(index_wilayah).size()
@@ -119,14 +124,6 @@ def show_map(level_data, filter_data) :
         tooltip = folium.GeoJsonTooltip(
             fields=["iddesa", "nmkec", "nmdesa", "Measure", "Persentase"],
             aliases=["Kode Desa", "Kecamatan", "Desa", "Data", "Data (%)"]
-        )
-    elif level_data == "Blok Sensus":
-        id = "idbs"
-        gdf = gpd.read_file(bs)
-        gdf_merged = gdf.merge(data, on = id, how = "left")
-        tooltip = folium.GeoJsonTooltip(
-            fields=["idbs", "nmkec", "nmdesa", "kdbs", "Measure", "Persentase"],
-            aliases=["Kode BS", "Kecamatan", "Desa", "BS", "Data", "Data (%)"]
         )
     
     # Tampilkan peta
@@ -306,12 +303,12 @@ with col2:
     with cola:
         level = st.selectbox(
             "Level Data:",
-            ("Kabupaten", "Kecamatan", "Nagari", "Blok Sensus")
+            ("Kabupaten", "Kecamatan", "Nagari")
         )
 
     with colb:
         filter_data = st.selectbox(
             "Filter data:",
-            ("Dokumen Masuk IPDS", "Dokumen Clean")
+            ("Dokumen Masuk IPDS", "Dokumen Selesai Entri", "Dokumen Clean")
         )
     show_map(level, filter_data)
